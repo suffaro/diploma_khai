@@ -1,4 +1,5 @@
 import mysql.connector
+import logging
 from mysql.connector import Error
 
 class Database:
@@ -8,6 +9,16 @@ class Database:
         self.password = password
         self.database = database
         self.connection = None
+
+    # add new user
+    # check login credentials
+    # add  auth_token
+    # verify token
+    # all payments
+    # all users ??
+    # all messages
+    # add payment
+    # add user premium status
 
     def connect(self):
         try:
@@ -29,11 +40,11 @@ class Database:
                 cursor.execute(query, params)
             else:
                 cursor.execute(query)
-            self.connection.commit()
+            # self.connection.commit()
             print("Query executed successfully")
             return cursor.fetchall()  # If the query is a SELECT statement
         except Error as e:
-            print(f"Error executing query: {e}")
+            print(f"Error executing query ({query}): {e}")
 
     def close(self):
         if self.connection.is_connected():
@@ -42,16 +53,12 @@ class Database:
 
 # Example usage:
 if __name__ == "__main__":
-    # Replace these with your actual MySQL database credentials
     db = Database(host="localhost", user="root", password="Suma1l24_", database="diploma_khai")
 
     db.connect()
 
-    # Example query
-    query = "SELECT * FROM USERS"
+    query = "SELECT * FROM Users"
     results = db.execute_query(query)
     print(results)
-    for row in results:
-        print(row)
 
-    db.close()
+

@@ -1,0 +1,4 @@
+host=localhost
+user=root
+password=Suma1l24_
+database=diploma_khai
