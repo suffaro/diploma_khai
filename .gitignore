@@ -1,1 +1,3 @@
-\server-side\config\config.txt
+*.pyc
+clip/
+server-side/config/
