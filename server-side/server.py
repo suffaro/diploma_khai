@@ -1,51 +1,72 @@
-import io
-import queue
 import socket
 import threading
+from my_logger import setup_logger
+from database import Database
 
-import cv2
-import numpy as np
-from PIL import Image
+class Server():
+    def __init__(self):
 
-def image_viewer(q: queue.Queue):
-    while True:
+        self.addr_ip = "127.0.0.1"
+        self.addr_port = 65432
+        self.buffer = 4096
+
+        self.logger = setup_logger('ServerLogger', "server_side_logs.log")
+
+
+        self.run_server()
+
+
+    def handle_client(self, client_socket, addr):
         try:
-            img_name, img = q.get(block=True, timeout=.1)  # poll every 0.1 seconds
-            print(f'Image viewer: displaying `{img_name}`!')
-            cv2.imshow('Image preview', img)
-        except queue.Empty:
-            ...  # no new image to display
-        key = cv2.pollKey()  # non-blocking
-        if key & 0xff == ord('q'):
-            cv2.destroyAllWindows()
-            print('Image viewer was closed')
-            return
+            while True:
+                # receive and print client messages
+                request = client_socket.recv(self.buffer).decode("utf-8")
+                if request.lower() == "close":
+                    client_socket.send("closed".encode("utf-8"))
+                    break
+                elif request.lower()[:5] == 'login':
+                    client_socket.send(self.process_request(request).encode('utf-8'))
+                self.logger.info(f"Received: {request}")
+                # convert and send accept response to the client
+                response = "accepted"
+                client_socket.send(response.encode("utf-8"))
+        except Exception as e:
+            self.logger.error(f"Error when hanlding client: {e}")
+        finally:
+            client_socket.close()
+            self.logger.info(f"Connection to client ({addr[0]}:{addr[1]}) closed")
 
-def serve_forever(host: str, port: int, img_dir: str = 'C:/Users/my_user/stream_images/', img_format: str = '.png'):
-    q = queue.Queue()
-    img_viewer = threading.Thread(target=image_viewer, args=(q,))
-    img_viewer.start()
 
-    with socket.socket() as s:
-        s.bind((host, port))
-        s.listen(1)
-        count = 0
-        print('The server is ready')
-        while True:
-            conn, addr = s.accept()
-            count = count + 1
-            img_name = img_dir + 'frame' + str(count) + img_format
-            print (f'Client connected: {addr}')
-            img = b''
-            while data := conn.recv(2048):
-                img += data
-            conn.sendall('Thank you for connecting'.encode())  # maybe use return codes for success, error etc.?
-            conn.close()
-            pil_img = Image.open(io.BytesIO(img))  # might want to save to disk?
-            np_img = np.asarray(pil_img)
-            np_img = cv2.rotate(np_img, cv2.ROTATE_90_CLOCKWISE)
-            q.put((img_name, np_img))
-            print (f'Client at {addr} disconnected after receiving {len(img) / 1024:,.1f} kB of data.')
+    def run_server(self):
+        try:
+            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            # bind the socket to the host and port
+            server.bind((self.addr_ip, self.addr_port))
+            # listen for incoming connections
+            server.listen()
+            self.logger.info(f"Listening on {self.addr_ip}:{self.addr_port}")
+
+            while True:
+                # accept a client connection
+                client_socket, addr = server.accept()
+                self.logger.info(f"Accepted connection from {addr[0]}:{addr[1]}")
+                # start a new thread to handle the client
+                thread = threading.Thread(target=self.handle_client, args=(client_socket, addr,))
+                self.logger.info(f"{addr[0]}:{addr[1]} received {thread.name} for processing!")
+                thread.start()
+        except Exception as e:
+            self.logger.error(f"Error: {e}")
+        finally:
+            server.close()
+
+
+    # requests : password confirm, email in the system, image for processing, buy premium, download model, send message to our team, update an app
+    # 
+    def process_request(self, request) -> str:
+        pass
+
+
+
 
 if __name__ == '__main__':
-    serve_forever('127.0.0.1', 999)
+    serv = Server()

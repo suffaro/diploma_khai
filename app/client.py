@@ -1,17 +1,48 @@
 import socket
-from PIL import Image
 
-def send_image(img: Image, host: str = '127.0.0.1', port: int = 999):
-    s = socket.socket()
-    s.connect((host, port))
-    img_data = img._repr_png_()
-    s.sendall(img_data)
-    s.shutdown(socket.SHUT_WR)  # close socket for writing, receiving is still possible
-    print(f'Sent {len(img_data) / 1024:,.1f} kB of image data.')
-    b_data = b''
-    while recv_data := s.recv(2048):
-        b_data += recv_data
-    print(f'Server response: {b_data.decode()}')
-    # maybe check server response for server side errors etc. and add return value for this function?
+from settings import SERV_IP
 
-# use like: send_image(Image.open('test.png'))
+
+class Client():
+    def __init__(self):
+
+        self.addr = (SERV_IP["IP"], SERV_IP['PORT'])
+        self.run_client()
+        
+
+
+def run_client():
+    # create a socket object
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    server_ip = "127.0.0.1"  # replace with the server's IP address connect_client(), send_request(), close_connection(), update_application(), download_model(), send_payment(), send_logs() 
+    server_port = 65432  # replace with the server's port number
+    # establish connection with server
+    client.connect((server_ip, server_port))
+
+    try:
+        while True:
+            # get input message from user and send it to the server
+            msg = input("Enter message: ")
+            client.send(msg.encode("utf-8")[:1024])
+
+            # receive message from the server
+            response = client.recv(1024)
+            response = response.decode("utf-8")
+
+            # if server sent us "closed" in the payload, we break out of
+            # the loop and close our socket
+            if response.lower() == "closed":
+                break
+
+            print(f"Received: {response}")
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        # close client socket (connection to the server)
+        client.close()
+        print("Connection to server closed")
+
+
+if __name__ == '__main__':
+    Client()

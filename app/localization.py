@@ -19,7 +19,7 @@ LOGIN_PAGE = {
 }
 
 MAIN_WINDOW = {
-    "": {"EN": "", "UA": ""},
+    "": {"EN": "Main page", "UA": ""},
     "": {"EN": "", "UA": ""},
     "": {"EN": "", "UA": ""},
     "": {"EN": "", "UA": ""},

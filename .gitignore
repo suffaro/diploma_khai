@@ -1,3 +1,4 @@
 *.pyc
 clip/
 server-side/config/
+*.log
