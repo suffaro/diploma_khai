@@ -2,3 +2,9 @@
 clip/
 server-side/config/
 *.log
+server_side_logs
+*.png
+*.txt
+*.gif
+*.pt
+*.safetensors

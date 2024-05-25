@@ -5,7 +5,9 @@ import json
 import os
 from my_logger import setup_logger
 from hashlib import sha256
-from datetime import date
+from datetime import date, timedelta, datetime
+import bcrypt
+from random import randint
 
 class Database:
     def __init__(self, config_file):
@@ -34,33 +36,43 @@ class Database:
             query = "INSERT INTO users (username, password) VALUES (%s, %s)"
             self.execute_query(query, (username, password_hash))
             self.logger.info(f"Added new user with Login: {username} and Pass_Hash: {password_hash}")
+            # adding record to credits
+            query = "INSERT INTO Credits(username) VALUES (%s)"
+            self.execute_query(query, (username, ))
+            self.logger.info(f"Added record in credit system for user: {username}")
             return True
         except Error as e:
             self.logger.error(f"Error executind adding new user. Query - {query}: {e}")
             return False
     
-    def check_login_credentials(self, username: str, password_hash: str) -> bool:
+    def check_login_credentials(self, username: str, password: str) -> bool:
         try:
-            query = "SELECT COUNT(*) FROM users WHERE username = %s AND password = %s"
-            results = self.execute_query(query, (username, password_hash))
-            if results[0] == 1:
-                self.logger.info(f"Login credentials for user {username} verified.")
-                return True
+            query = "SELECT password FROM users WHERE username = %s"
+            results = self.execute_query(query, (username,))
+            
+            if results[0][0]:
+                stored_hash = results[0][0].encode('utf-8')
+                if bcrypt.checkpw(password.encode('utf-8'), stored_hash):
+                    self.logger.info(f"Login credentials for user {username} verified.")
+                    return True
+                else:
+                    self.logger.info(f"Login credentials for user {username} not verified. Password hashes aren't the same.")
+                    return False
             else:
-                self.logger.info(f"Login credentials for user {username} not verified.")
+                self.logger.info(f"Login credentials for user {username} not verified. No record found")
                 return False
         except Error as e:
             self.logger.error(f"Error executing login credentials check for user {username}: {e}")
             return False
     
     # create table for this function
-    def add_auth_token(self, username: str) -> str:
+    def add_auth_token(self, username: str, password: str) -> str:
         try:
             today_date = date.today().strftime('%Y-%m-%d')
-            reference_string = username + today_date
+            reference_string = username + password + today_date
             hashed_token = sha256(reference_string.encode()).hexdigest()
-            query = "INSERT INTO auth_tokens VALUE %s"
-            if self.execute_query(query, (hashed_token,)):
+            query = "INSERT INTO auth_tokens (token, start_date, end_date, username) VALUES (%s,%s,%s,%s)"
+            if self.execute_query(query, (hashed_token, today_date, (date.today() + timedelta(days=21)).strftime('%Y-%m-%d'), username)):
                 return hashed_token
             else:
                 return None
@@ -80,7 +92,7 @@ class Database:
 
     def check_login_exists(self, username: str) -> bool:
         try:
-            query = "SELECT COUNT(*) FROM users WHERE username = %s"
+            query = "SELECT authority FROM users WHERE username = %s"
             results = self.execute_query(query, (username,))
             self.logger.info('Check_login_exists executed succesfully!')
             if results[0][0] == 1:
@@ -110,7 +122,75 @@ class Database:
         except Error as e:
             self.logger.error(f"Something went wrong during add_request function. Error - {e}")
 
+    def verify_premium_status(self, username: str) -> str | bool:
+        try:
+            query = "SELECT end_date FROM Subscribers WHERE username = %s"
+            results = self.execute_query(query, (username,))
+            self.logger.info('verify_premium_status executed succesfully!')
+            if results[0][0]:
+                return results[0][0]
+            else: return False
+        except Error as e:
+            self.logger.error(f"Something went wrong during verify_premium_status function. Error - {e}")
 
+    def verify_user_credits(self, username: str) -> str:
+        try:
+            query = "SELECT credits FROM Credits WHERE username = %s"
+            results = self.execute_query(query, (username,))
+            self.logger.info('verify_user_credits executed succesfully!')
+            if results[0][0]:
+                return results[0][0]
+            else: return False
+        except Error as e:
+            self.logger.error(f"Something went wrong during verify_user_credits function. Error - {e}")
+
+    def generate_confirmation_code(self, username: str) -> str:
+        try:
+            code = str(randint(100000, 999999))
+            query = "INSERT INTO confirmation_codes(username, code, expiration_date) VALUES (%s, %s, %s)"
+            expiration_date = datetime.now() + timedelta(minutes=10)
+            results = self.execute_query(query, (username, code, expiration_date))
+            self.logger.info('generate_confirmation_code executed succesfully!')
+            if results:
+                return code
+            else: return False
+        except Error as e:
+            self.logger.error(f"Something went wrong during generate_confirmation_code function. Error - {e}")
+
+    def verify_user_credits(self, username: str) -> str | bool:
+        try:
+            query = "SELECT credits FROM Credits WHERE username = %s"
+            results = self.execute_query(query, (username,))
+            self.logger.info('verify_user_credits executed succesfully!')
+            if results[0][0]:
+                return results[0][0]
+            else: return False
+        except Error as e:
+            self.logger.error(f"Something went wrong during verify_user_credits function. Error - {e}")
+
+    def decrement_user_credits(self, username: str) -> bool:
+        try:
+            query = "UPDATE credits SET credits = credits - 1 WHERE username = %s"
+            results = self.execute_query(query, (username,))
+            self.logger.info('decrement_user_credits executed succesfully!')
+            if results:
+                return True
+            else: return False
+        except Error as e:
+            self.logger.error(f"Something went wrong during decrement_user_credits function. Error - {e}")
+
+    def verify_confirmation_code(self, username: str, code: str) -> bool:
+        try:
+            query = "select code from confirmation_codes where username = %s and code = %s"
+            results = self.execute_query(query, (username,code))
+            self.logger.info('verify_confirmation_code executed succesfully!')
+            if results:
+                return True
+            else: return False
+        except Error as e:
+            self.logger.error(f"Something went wrong during verify_confirmation_code function. Error - {e}")
+
+    
     # all payments
     # all messages
     # add payment
@@ -139,7 +219,7 @@ class Database:
             self.logger.info("Connection to MySQL database closed")
 
 
-    def execute_query(self, query, params=None):
+    def execute_query(self, query, params=None) -> list | bool:
         """
         Execute a MySQL query and return the results.
 
@@ -156,10 +236,12 @@ class Database:
         try:
             cursor.execute(query, params)
             results = cursor.fetchall()
+            self.connection.commit()
             return results if results else True
 
         except mysql.connector.Error as error:
             self.logger.error(f"Error executing query: {error}")
+            return False
 
         finally:
             cursor.close()
@@ -191,11 +273,20 @@ if __name__ == "__main__":
 
     db.connect()
 
-    # query = "SELECT * FROM Users"
-    username = 'suffaro'
-    results = db.check_login_exists(username)
-    db.test()
-    print(results)
+    # pass_hash = "$2b$12$N7hbRSm84721Lqslr29i.eEvqcxNA.WA6anBPNnniiNnnFYDD/KkO"
+
+    # # query = "SELECT * FROM Users"
+    username = 'rapperorwhat@gmail.com'
+    # results = db.check_login_exists(username)
+
+    # print(results)
+
+    # print(db.check_login_credentials(username, pass_hash))
+
+    #query = "select end_date from Subscribers"
+    #db.execute_query(query, (username, ))
+
+    # print(db.verify_premium_status(username))
 
     db.close()
 
