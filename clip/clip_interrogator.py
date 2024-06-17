@@ -1,3 +1,4 @@
+
 import hashlib
 import math
 import numpy as np
@@ -14,6 +15,7 @@ from tqdm import tqdm
 from typing import List, Optional
 
 from safetensors.numpy import load_file, save_file
+
 
 CAPTION_MODELS = {
     'blip-base': 'Salesforce/blip-image-captioning-base',   # 990MB
@@ -91,6 +93,7 @@ class Interrogator():
         else:
             self.caption_model = self.config.caption_model
             self.caption_processor = self.config.caption_processor
+
 
     def load_clip_model(self):
         start_time = time.time()
@@ -448,3 +451,25 @@ def load_list(data_path: str, filename: Optional[str] = None) -> List[str]:
     with open(data_path, 'r', encoding='utf-8', errors='replace') as f:
         items = [line.strip() for line in f.readlines()]
     return items
+
+def download_model_gui(model: str, result: list) -> None:
+    try:
+        config = Config()
+        config.clip_model_name = model
+        config.clip_model_path = os.path.dirname(os.path.realpath(__file__)) + "\\models"
+        clip_model_name, clip_model_pretrained_name = config.clip_model_name.split('/', 2)
+        clip_model, _, clip_preprocess = open_clip.create_model_and_transforms(
+            clip_model_name, 
+            pretrained=clip_model_pretrained_name, 
+            precision='fp16' if config.device == 'cuda' else 'fp32',
+            device=config.device,
+            jit=False,
+            cache_dir=config.clip_model_path
+        )
+        result.append(True)
+    except Exception as e:
+        result.append(False)
+
+if __name__ == '__main__':
+    #download_model_gui("ViT-L-14/datacomp_xl_s13b_b90k")
+    print("Hi!")

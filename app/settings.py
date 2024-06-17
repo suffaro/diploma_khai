@@ -17,7 +17,7 @@ class ApplicationConfiguration():
 
         self.seconds_to_wait = 1
 
-        file_path = os.path.dirname(os.path.realpath(__file__)) + "\\user_settings"
+        file_path = os.path.dirname(os.path.realpath(__file__)) + "\\configs\\user_settings"
         if os.path.exists(file_path):
             with open(file_path, 'r') as file:
                 lines = file.readlines()
@@ -30,8 +30,9 @@ class ApplicationConfiguration():
                         "cmd" : 0,
                         "theme" : "darkly",
                         "auto_update" : 0,
-                        "cache_save" : 0
+                        "cache_save" : 1
                         }
+            os.mkdir(os.path.dirname(os.path.realpath(__file__)) + "\\configs")
             with open(file_path, 'w') as file:
                 for key, element in settings_dictionary.items():
                     file.write(f"{key}:{element}\n")

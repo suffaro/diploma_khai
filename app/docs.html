@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImgProPlus Application Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        header {
+            background: #333;
+            color: #fff;
+            padding: 10px 0;
+            text-align: center;
+        }
+        nav {
+            margin: 20px 0;
+        }
+        nav a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        section {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ImgProPlus Application Documentation</h1>
+    </header>
+    
+    <nav>
+        <a href="#introduction">Introduction</a>
+        <a href="#processimage">Processing Image</a>
+        <a href="#install_new_models">Install New Models</a>
+        <a href="#buy_premium">Premium Purchase</a>
+        <a href="#config-parameters">Config Parameters</a>
+    </nav>
+
+    <section id="introduction">
+        <h2>Introduction</h2>
+        <p>
+            This documentation covers the usage of the ImgProPlus application, detailing how to configure and use the app for PROMPTs generation. The Application leverages CLIP models to generate prompts based on input images, offering different models for various use cases.
+        </p>
+    </section>
+
+    <section id="processimage">
+        <h2>Processing image</h2>
+        <p>
+            To process an image in the ImgProPlus application, follow these steps:
+            <ol>
+                <li>Click on the "Upload Image" button.</li>
+                <li>Select the image file you want to process from your computer.</li>
+                <li>Once the image is uploaded, it will be displayed in the canvas area.</li>
+                <li>If needed, adjust the image size by stretching or filling it using the provided controls.</li>
+                <li>In the "Settings" section, choose the desired options for device, model, mode, and compute.</li>
+                <li>Optionally, click on the "Additional Settings" button to fine-tune advanced settings.</li>
+                <li>Click on the "Process Image" button to start the processing.</li>
+                <li>Wait for the processing to complete. A loading animation will indicate that the processing is in progress.</li>
+                <li>Once the processing is done, the results will be displayed in a new window.</li>
+                <li>Review the results and analyze the prompts generated based on your selected settings.</li>
+                <li>You can repeat the process with different images or settings as needed.</li>
+            </ol>
+        </p>
+    </section>
+
+    <section id="install_new_models">
+        <h2>Installing New Models</h2>
+        <p>
+            To install a new model, follow these steps:
+        </p>
+        <ol>
+            <li>Open the "Models" section.</li>
+            <li>Select the model you need or prefer.</li>
+            <li>Click on "Install". The application will download the specified model for you.</li>
+            <li>In case you don't have premium, consider purchasing it to download all the best models.</li>
+        </ol>
+    </section>
+
+    <section id="buy_premium">
+        <h2>Premium Purchase</h2>
+        <p>
+            To buy premium for your account, follow these steps:
+        </p>
+        <ol>
+            <li>Open the "Account" section.</li>
+            <li>Click on the "Purchase Premium" button.</li>
+            <li>Follow the instructions in a new window to complete the purchase.</li>
+            <li>After a successful purchase, you'll have information about premium in your account.</li> 
+            <li>If your models aren't available to download, try restarting the app.</li> 
+        </ol>
+    </section>
+    <section id="config-parameters">
+        <h2>Config Parameters</h2>
+        <p>
+            The Clip Interrogator can be customized using various configuration parameters. Below is a detailed explanation of each parameter:
+        </p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>device</code></td>
+                    <td>Specifies the device to use for computation. Options include <code>cpu</code> and <code>gpu</code> (for CUDA).</td>
+                </tr>
+                <tr>
+                    <td><code>clip_model</code></td>
+                    <td>The CLIP model to use. Examples include <code>ViT-B/32</code>, <code>ViT-L/14</code>, etc.</td>
+                </tr>
+                <tr>
+                    <td><code>caption_max_length</code></td>
+                    <td>Sets the maximum length for generated captions. A higher value produces longer, more detailed captions.</td>
+                </tr>
+                <tr>
+                    <td><code>chunk_size</code></td>
+                    <td>Determines the chunk size for processing. Adjusting this value can affect performance and memory usage.</td>
+                </tr>
+                <tr>
+                    <td><code>flavor_intermediate_count</code></td>
+                    <td>Specifies the number of intermediate flavors to consider. Useful for generating more nuanced prompts.</td>
+                </tr>
+                <tr>
+                    <td><code>blip_image_eval_size</code></td>
+                    <td>Sets the size of the image evaluation in the Blip settings. This parameter determines the dimensions of the image used for evaluation during processing.</td>
+                </tr>
+                <tr>
+                    <td><code>blip_max_length</code></td>
+                    <td>Sets the maximum length for prompts in the Blip settings. A higher value produces longer, more detailed prompts.</td>
+                </tr>
+                <tr>
+                    <td><code>blip_offload</code></td>
+                    <td>Determines whether to enable offloading in the Blip settings. If set to <code>True</code>, certain tasks may be offloaded for improved performance.</td>
+                </tr>
+                <tr>
+                    <td><code>caption_model_name</code></td>
+                    <td>Specifies the name of the caption model to use. This parameter determines the specific model architecture used for generating captions.</td>
+                </tr>
+                <tr>
+                    <td><code>mode</code></td>
+                    <td>Determines the processing mode to use. Available options include <code>fast</code>, <code>negative</code>, <code>classic</code>, and <code>best</code>. Each mode offers different trade-offs between speed and accuracy.</td>
+                </tr>
+                <tr>
+                    <td><code>compute</code></td>
+                    <td>Specifies the compute platform to use for processing. Options include <code>local</code> for local processing and <code>cloud</code> for cloud-based processing.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</body>
+</html>

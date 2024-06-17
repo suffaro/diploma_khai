@@ -42,7 +42,6 @@ class Client():
         finally:
             # close client socket (connection to the server)
             client.close()
-            print("Connection to server closed")
 
     def process_request(self, request: str, image_path=None) -> str:
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -62,7 +61,6 @@ class Client():
         finally:
             # close client socket (connection to the server)
             client.close()
-            print("Connection to server closed")
 
     def send_image(self, request: str, image_path: str) -> str:
         try:
@@ -72,14 +70,11 @@ class Client():
             response = s.recv(self.buffer).decode('utf-8')
             if response == "no credit":
                 return response
-            print(response)
             with open(image_path, 'rb') as f:
                 file_data = f.read()
             s.sendall(file_data)
             s.sendall(b"<END>")
-            print("waiting for response..")
             response = s.recv(self.buffer).decode('utf-8')
-            print(response)
             prompts = s.recv(self.buffer).decode('utf-8')
             s.close()
             return prompts

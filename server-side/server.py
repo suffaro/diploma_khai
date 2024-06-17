@@ -3,11 +3,27 @@ import threading
 from my_logger import setup_logger
 from database import Database
 import os
+import bcrypt
+import pathlib
+from PIL import Image
+import sys
 import json
 
-from PIL import Image
+sys.path.insert(0, '..\\clip')
 
-CONFIG_FILE = 'server-side/config/db_config.json'
+
+
+DB_CONFIG_FILE = str(pathlib.Path(__file__).parent) + '\config\db_config.json'
+SERV_CONFIG_FILE = str(pathlib.Path(__file__).parent) + '\config\serv_config.json'
+API_TOKENS = str(pathlib.Path(__file__).parent) + '\config\env.json'
+
+with open(API_TOKENS, 'r') as file:
+    config = json.load(file)
+
+    LIQPAY_TOKEN = config.get("LIQPAY_TOKEN")
+    EMAIL_PROVIDER_TOKEN = config.get("EMAIL_PROVIDER_TOKEN")
+
+
 APP_V = "1.0.2"
 """
     answer format
@@ -28,72 +44,162 @@ APP_V = "1.0.2"
     TKN - token verification
     SSV - user premium status verification
     LOG - user send log with error
-    REG - register new user
     SCC - send confirmation code
     IMG - send image for processing
-    VCC = verify confirmation code
+    VCC - verify confirmation code
+    MSG - user question
+    EXT - info about extensions
+
+    REG - register new user
+    SUB - info about subscriptions
+    PAY - payment info
     DUP - download update
+    RMV - remove token
+
+    RES - reset password
 """
 class Server():
     def __init__(self):
 
-        self.addr_ip = "127.0.0.1"
-        self.addr_port = 65432
-        self.buffer = 4096
+        with open(SERV_CONFIG_FILE, 'r') as file:
+            config = json.load(file)
 
-        self.logger = setup_logger('ServerLogger', "server_side_logs.log")
+            self.addr_ip = config.get("IP")
+            self.addr_port = config.get("PORT")
+            self.buffer = config.get("MAX_CHUNK_SIZE")
+            self.max_conn = config.get("MAX_CONNECTIONS")
+            self.online = config.get("ONLINE")
+
+        if not os.path.exists(os.path.dirname(os.path.realpath(__file__)) + "\\logs"):
+            os.mkdir(os.path.dirname(os.path.realpath(__file__)) + "\\logs")
+        self.logger = setup_logger(logger_name="Server Logger", logger_file=".\logs\server_side_logs.log")
 
         self.images_dir = "uploaded_images"
 
-        self.server_database = Database(CONFIG_FILE)
+        self.server_database = Database(DB_CONFIG_FILE)
         self.server_database.connect()
 
 
-        self.run_server()
 
 
     def handle_client(self, client_socket: socket.socket, addr) -> None:
-        try:
-            while True:
-                # receive and print client messages
-                request = client_socket.recv(self.buffer).decode("utf-8")
-                request_list = request.split(sep = "|")
-                print(request_list)
-                if request_list[0] == "close":
-                    client_socket.send("closed".encode("utf-8"))
-                    break
-                elif request_list[0] == 'CLS':
-                    client_socket.send(self.process_request(request_list[1]))
-                elif request_list[0] == 'UCV':
-                    client_socket.send(self.user_verification(request_list[1], request_list[2]))
-                elif request_list[0] == 'IMG':
-                    prompts = self.process_image(request_list[1], request_list[2], request_list[3], request_list[4], client_socket)
-                    client_socket.send(prompts)
-                elif request_list[0] == 'TKN':
-                    client_socket.send(self.verify_token(request_list[1]))
-                elif request_list[0] == 'SSV':
-                    client_socket.send(self.verify_user_premium(request_list[1]))
-                elif request_list[0] == 'CSV':
-                    client_socket.send(self.verify_credits(request_list[1]))
-                elif request_list[0] == 'UPD':
-                    client_socket.send(self.check_updates(request_list[1]))
-                elif request_list[0] == 'REG':
-                    client_socket.send(self.register_new_user(request_list[1], request_list[2], request_list[3]))
-                elif request_list[0] == 'SCC':
-                    client_socket.send(self.send_confirmation_code(request_list[1]))
-                elif request_list[0] == 'VCC':
-                    client_socket.send(self.verify_confirmation_code(request_list[1], request_list[2]))
-                self.logger.info(f"Received: {request}")
-                client_socket.close()
+        try:   # receive and print client messages
+            request = client_socket.recv(self.buffer).decode("utf-8")
+            request_list = request.split(sep = "|")
+            if request_list[0] == "close":
+                client_socket.send("closed".encode("utf-8"))
+            elif request_list[0] == 'CLS':
+                client_socket.send(self.user_exists(request_list[1]))
+            elif request_list[0] == 'UCV':
+                client_socket.send(self.user_verification(request_list[1], request_list[2]))
+            elif request_list[0] == 'IMG':
+                prompts = self.process_image(request_list[1], request_list[2], request_list[3], request_list[4], client_socket)
+                client_socket.send(prompts)
+            elif request_list[0] == 'TKN':
+                client_socket.send(self.verify_token(request_list[1]))
+            elif request_list[0] == 'SSV':
+                client_socket.send(self.verify_user_premium(request_list[1]))
+            elif request_list[0] == 'CSV':
+                client_socket.send(self.verify_credits(request_list[1]))
+            elif request_list[0] == 'UPD':
+                client_socket.send(self.check_updates(request_list[1]))
+            elif request_list[0] == 'REG':
+                client_socket.send(self.register_new_user(request_list[1], request_list[2]))
+            elif request_list[0] == 'SCC':
+                client_socket.send(self.send_confirmation_code(request_list[1]))
+            elif request_list[0] == 'VCC':
+                client_socket.send(self.verify_confirmation_code(request_list[1], request_list[2]))
+            elif request_list[0] == 'MSG':
+                client_socket.send(self.apply_request(request_list[1], request_list[2]))
+            elif request_list[0] == 'EXT':
+                client_socket.send(self.get_models())
+            elif request_list[0] == 'SUB':
+                client_socket.send(self.get_subscriptions(request_list[1]))
+            elif request_list[0] == 'PAY':
+                client_socket.send(self.get_payment_info(request_list[1]))
+            elif request_list[0] == 'DUP':
+                client_socket.send(self.download_update())
+            elif request_list[0] == 'RMV':
+                client_socket.send(self.remove_token(request_list[1]))
+            elif request_list[0] == 'RES':
+                client_socket.send(self.reset_password(request_list[1], request_list[2]))
+            else:
+                client_socket.send("Error".encode("utf-8"))
+            self.logger.info(f"Received: {request}")
+            client_socket.close()
         except Exception as e:
             self.logger.error(f"Error when hanlding client: {e}")
         finally:
-            client_socket.close()
             self.logger.info(f"Connection to client ({addr[0]}:{addr[1]}) closed")
 
-
-    def process_image(self, image_name: str, config_dict: str, interrogate_method: str, username: str, socket : socket.socket) -> bytes:
+    def get_models(self) -> bytes:
         try:
+            models = self.server_database.get_models()
+            if not models:
+                return "Error".encode('utf-8')
+            answer = ""
+            for model in models:
+                answer = answer + f"{model[0]};{model[1]};{model[2]}" + "|"
+            return answer[:-1].encode("utf-8")
+        except Exception as e:
+            self.logger(f"Error during models - {e}.")
+            return ""
+
+    def reset_password(self, username: str, new_password: str) -> bytes:
+        try:
+            hashed = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+            return str(self.server_database.reset_password(username, hashed)).encode('utf-8')
+        except Exception as e:
+            self.logger(f"Error during reset password - {e}.")
+
+    def get_subscriptions(self, locale) -> bytes:
+        subscriptions = self.server_database.get_subscriptions(locale)
+        if not subscriptions:
+            return "Error".encode('utf-8')
+        answer = ""
+        for subscription in subscriptions:
+            answer = answer + f"{subscription[0]};{subscription[1]};{subscription[2]}" + "|"
+        return answer[:-1].encode("utf-8")
+    
+
+    def get_payment_info(self, username: str) -> bytes:
+        return str(self.server_database.add_payment(username)).encode('utf-8')
+    
+    def remove_token(self, token: str) -> bytes:
+        return str(self.server_database.remove_auth_token(token)).encode('utf-8')
+
+    def process_image(self, image_name: str, config_dict: str, interrogate_method: str, username: str, socket: socket.socket) -> bytes:
+        """
+        Process an image using the specified configuration and interrogation method.
+
+        Args:
+            image_name (str): The name of the image file to be processed.
+            config_dict (str): A string containing configuration settings in the format 'key=value;key=value;...'.
+            interrogate_method (str): The interrogation method to use ('best', 'classic', 'fast', or 'negative').
+            username (str): The username of the user requesting the image processing.
+            socket (socket.socket): The socket object used for communication.
+
+        Returns:
+            bytes: The prompts generated by the image interrogation process, encoded as bytes.
+
+        Raises:
+            Exception: If an error occurs during the image processing.
+
+        This function performs the following steps:
+        1. Verifies the user's premium status and available credits.
+        2. Receives the image file from the client.
+        3. Parses the configuration settings from the config_dict string.
+        4. Creates an instance of the Interrogator class with the specified configuration.
+        5. Loads the image file and performs the specified interrogation method.
+        6. Removes the temporary image file.
+        7. Returns the generated prompts as bytes.
+
+        If the user is not a premium user and has no credits, it returns "no credit" as bytes.
+        If the user is not a premium user but has credits, it decrements the user's credits.
+        If an error occurs during the process, it logs the error message.
+        """
+        try:
+            # Verify user's premium status and available credits
             premium = self.server_database.verify_premium_status(username)
             credits = self.server_database.verify_user_credits(username)
             if not premium and credits == 0:
@@ -102,25 +208,29 @@ class Server():
                 credits = credits - 1
                 if not self.server_database.decrement_user_credits(username):
                     return "no credit".encode('utf-8')
+
+            # Receive the image file from the client
             self.receive_image(client_socket=socket, filename=image_name)
+
             from clip_interrogator import Interrogator, Config
+
+            # Parse configuration settings
             config_file = Config()
+            config_file.clip_model_path = os.path.join(os.path.dirname(__file__), 'models')
             list_with_configs = config_dict.split(sep=";")
             for pair in list_with_configs:
                 key, value = pair.split(sep="=")
                 if key == 'caption_max_length' or key == "chunk_size" or key == "flavor_intermediate_count":
                     setattr(config_file, key, int(value))
-                    continue
-                setattr(config_file, key, value)
-            print(config_file)
+                else:
+                    setattr(config_file, key, value)
+
+            # Create an instance of the Interrogator class
             ci = Interrogator(config_file)
 
+            # Load the image and perform the specified interrogation method
             image_path = os.path.join(self.images_dir, image_name)
-            print("Image path")
-            print(image_path)
             image = Image.open(image_path)
-            print("Image opneed")
-
             if interrogate_method == 'best':
                 prompts = ci.interrogate(image)
             elif interrogate_method == 'classic':
@@ -130,14 +240,22 @@ class Server():
             elif interrogate_method == 'negative':
                 prompts = ci.interrogate_negative(image)
 
+            # Remove the temporary image file
             os.remove(image_path)
 
-            print(prompts)
+            # Return the generated prompts as bytes
             return prompts.encode('utf-8')
+
         except Exception as e:
             self.logger.error(f"Error when processing image: {e}")
 
-
+    def apply_request(self, message: str, username: str) -> bytes:
+        try:
+            result = self.server_database.add_request(username, message)
+            return str(result).encode('utf-8')
+        except Exception as e:
+            self.logger.error(f"Error when adding user request: {e}")
+            return "False"
 
 
 
@@ -164,45 +282,47 @@ class Server():
         finally:
             server.close()
 
-    def register_new_user(self, username: str, password: str, confirmation_code: str) -> bytes:
-        pass
+    def register_new_user(self, username: str, password: str) -> bytes:
+        salt = bcrypt.gensalt()
+        pass_hash = bcrypt.hashpw(password.encode('utf-8'), salt)
+        result = self.server_database.add_new_user(username, pass_hash)
+        if result:
+            return "done".encode('utf-8')
+        return "error"
 
     def send_confirmation_code(self, username: str) -> bytes:
         try:
             result = self.server_database.generate_confirmation_code(username)
-            # import smtplib
+            self.logger.info(f"Generated confirmation code: {result} for user {username}")
+            import smtplib
 
-            # sender = "Private Person <mailtrap@demomailtrap.com>"
-            # receiver = f"A Test User <{username}>"
+            sender = "Private Person <mailtrap@demomailtrap.com>"
+            receiver = f"A Test User <{username}>"
 
-            # message = f"""\
-            # Subject: Hi Mailtrap
-            # To: {receiver}
-            # From: {sender}
+            message = f"""\
+            Subject: Hi Mailtrap
+            To: {receiver}
+            From: {sender}
 
-            # Your confirmation code - {result}.It lasts 10 minutes. 
-            # Don't send it to anybody."""
+            This is a test e-mail message."""
 
-            # with smtplib.SMTP("live.smtp.mailtrap.io", 587) as server:
-            #     server.starttls()
-            #     server.login("api", "87f8f8a3c4eb07c2ce13f7485cdd9ae0")
-            #     server.sendmail(sender, receiver, message)
-            # return "sent".encode('utf-8')
-            print(result)
+            with smtplib.SMTP("live.smtp.mailtrap.io", 587) as server:
+                server.starttls()
+                server.login("api", EMAIL_PROVIDER_TOKEN)
+                server.sendmail(sender, receiver, message)
+            return "send".encode('utf-8')
         except Exception as e:
             self.logger.error(f"Error sending email: {e}")
-            return "error".encode('utf-8')
+            return f"Error sending email: Contact administrator please.".encode('utf-8')
         
 
     def verify_confirmation_code(self, username: str, code: str) -> bytes:
-        pass
+        result = self.server_database.verify_confirmation_code(username, code)
+        return str(result).encode('utf-8')
 
     def verify_user_premium(self, username: str) -> bytes:
         result = str(self.server_database.verify_premium_status(username))
-        if result:
-            return result.encode('utf-8')
-        else:
-            return "False".encode('utf-8')
+        return result.encode('utf-8')
     
     def check_updates(self, app_version: str) -> bytes:
         if app_version == APP_V:
@@ -226,8 +346,8 @@ class Server():
 
     # requests : password confirm, email in the system, image for processing, buy premium, download model, send message to our team, update an app
     # 
-    def process_request(self, request: str) -> bytes:
-        return str(self.server_database.check_login_exists(request)).encode('utf-8')
+    def user_exists(self, username: str) -> bytes:
+        return str(self.server_database.check_login_exists(username)).encode('utf-8')
     
     def user_verification(self, username: str, password: str) -> bytes:
         result = self.server_database.check_login_credentials(username=username, password = password)
@@ -264,3 +384,4 @@ class Server():
 
 if __name__ == '__main__':
     serv = Server()
+    serv.run_server()
