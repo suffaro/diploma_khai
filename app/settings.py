@@ -7,7 +7,7 @@ class ApplicationConfiguration():
         # values from file
         self.locale = "UA" if locale.getdefaultlocale()[0] == "uk_UA" else "EN"
         self.theme = "darkly"
-        self.cache_save = 0
+        self.cache_save = 1
         self.auto_update = 0
         self.cmd = 0
 
@@ -17,7 +17,7 @@ class ApplicationConfiguration():
 
         self.seconds_to_wait = 1
 
-        file_path = os.path.dirname(os.path.realpath(__file__)) + "\\configs\\user_settings"
+        file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"configs", "user_settings")
         if os.path.exists(file_path):
             with open(file_path, 'r') as file:
                 lines = file.readlines()
@@ -32,7 +32,9 @@ class ApplicationConfiguration():
                         "auto_update" : 0,
                         "cache_save" : 1
                         }
-            os.mkdir(os.path.dirname(os.path.realpath(__file__)) + "\\configs")
+            folder_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "configs")
+            if not os.path.exists(folder_path):
+                os.mkdir(folder_path)
             with open(file_path, 'w') as file:
                 for key, element in settings_dictionary.items():
                     file.write(f"{key}:{element}\n")

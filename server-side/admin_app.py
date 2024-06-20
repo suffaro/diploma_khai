@@ -342,7 +342,7 @@ class LogsTab(ttk.Frame):
             time.sleep(interval)
     
     def start_listening_file_changes(self) -> None:
-        threading.Thread(target=self.detect_file_changes, args=(self.log_file, 1)).start()
+        thread = threading.Thread(target=self.detect_file_changes, args=(self.log_file, 1), daemon=True).start()
 
 #done
 class ServerTab(ttk.Frame):
@@ -623,15 +623,31 @@ class UsersTab(ttk.Frame):
         create_user_button = ttk.Button(self, text="Create User", command = lambda: self.UserCreateWindow(self), bootstyle='warning')
         create_user_button.pack(side='left', pady=10,padx=30, fill='both', expand=True)
 
+        change_sub_button = ttk.Button(self, text="Change Subscription", command = self.change_subscription, bootstyle='primary')
+        change_sub_button.pack(side='left', pady=10,padx=30, fill='both', expand=True)
+
         self.refresh_button = ttk.Button(self, text="Refresh", command=self.refresh_table)
         self.refresh_button.pack(side='left', pady=10,padx=30, fill='both', expand=True)
+
+    def change_subscription(self):
+        selected_item = self.tree.selection()
+        for item in selected_item:
+            username = self.tree.item(item, "values")[1]
+            if not database.verify_premium_status(username):
+                result = DatePickerDialog(self, title="Select Sub. End Date", startdate=date.today() + timedelta(days=1))
+                user_sub_date = result.date_selected
+                database.add_user_premium_status(username=username, end_date=user_sub_date)
+            else:
+                database.delete_premium_status(username)
+        self.refresh_table()
+
 
     def refresh_table(self):
         # Clear existing items in the Treeview
         self.tree.delete(*self.tree.get_children())
 
         # Sample data (replace with your data)
-        query = "SELECT u.username, CASE WHEN s.username IS NULL THEN 'No Subscription' ELSE 'Has Subscription' END AS Subscription_Status FROM Users u LEFT JOIN Subscribers s ON u.username = s.username;"
+        query = "SELECT u.username, CASE WHEN s.username IS NOT NULL THEN CONCAT('Has subscription (up to ', s.end_date, ')') ELSE 'Without subscription' END AS subscription_status FROM Users u LEFT JOIN Subscribers s ON u.username = s.username;"
         users = database.execute_query(query)
         i = 1
         if users:
@@ -856,3 +872,4 @@ def validate_price(event):
 
 if __name__ == '__main__':
     AdminApp().run()
+    database.close()

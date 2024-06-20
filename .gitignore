@@ -1,10 +1,7 @@
 *.pyc
-server-side/config/
 *.log
 server_side_logs
 *.png
-*.txt
-*.gif
 *.pt
 *.safetensors
 *.spec
@@ -12,3 +9,5 @@ token
 user_settings
 xd.py
 models/
+blip/
+fakepath/

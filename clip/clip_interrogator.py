@@ -50,7 +50,7 @@ class Config:
     cache_path: str = 'cache'   # path to store cached text embeddings
     download_cache: bool = True # when true, cached embeds are downloaded from huggingface
     chunk_size: int = 2048      # batch size for CLIP, use smaller for lower VRAM
-    data_path: str = os.path.join(os.path.dirname(__file__), 'data')
+    data_path: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'clip', 'data'))
     device: str = ("mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
     flavor_intermediate_count: int = 2048
     quiet: bool = False # when quiet progress bars are not shown
@@ -63,7 +63,7 @@ class Config:
         self.flavor_intermediate_count = 1024
 
 class Interrogator():
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, loader_text=None):
         self.config = config
         self.device = config.device
         self.dtype = torch.float16 if self.device == 'cuda' else torch.float32
@@ -83,7 +83,7 @@ class Interrogator():
             elif self.config.caption_model_name.startswith('blip2-'):
                 caption_model = Blip2ForConditionalGeneration.from_pretrained(model_path, torch_dtype=self.dtype)
             else:
-                caption_model = BlipForConditionalGeneration.from_pretrained(model_path, torch_dtype=self.dtype)
+                caption_model = BlipForConditionalGeneration.from_pretrained(model_path, torch_dtype=self.dtype, cache_dir=os.path.join(self.config.data_path, 'blip'))
             self.caption_processor = AutoProcessor.from_pretrained(model_path)
 
             caption_model.eval()

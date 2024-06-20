@@ -1,0 +1,10 @@
+mysql_connector==2.2.9
+numpy==1.24.3
+open_clip_torch==2.24.0
+Pillow==10.3.0
+python_bcrypt==0.3.2
+Requests==2.32.3
+safetensors==0.4.3
+torch==2.2.2
+tqdm==4.65.0
+transformers==4.39.2

@@ -103,12 +103,15 @@ MAIN_WINDOW = {
     "save_cache_tooltip": {"EN": "When enabled, increases performance of model on your machine, by saving safetensor files. Read more about it in Docs.", "UA": "Якщо ввімкнено, збільшує продуктивність моделі на вашій машині, зберігаючи файли safetensor. Докладніше прочитайте у Документації."},
     "update_message_outdated": {"EN": "Your application is out dated. New version available - ", "UA": "Ваша програма застаріла. Доступна нова версія - "},
     "update_message_newest": {"EN": "Your application is up to date.", "UA": "Ваша програма оновлена."},
+    "message_restart_app_settings": {"EN": "To apply changes, restart the application. Restart it now?", "UA": "Для застосування змін, перезапустіть програму. Перезапустити зараз?"},
+    "message_title_restart_app_settings": {"EN": "Restart Application", "UA": "Перезапустити програму"},
 
     # results tab
     "results_title": {"EN": "Results", "UA": "Результати"},
     "computational_time_label": {"EN": "Computational Time:", "UA": "Час обчислення:"},
     "results_prompt_label": {"EN": "Resulting Prompt:", "UA": "Отриманий запит:"},
     "copy_button": {"EN": "Copy", "UA": "Копіювати"},
+    "image_processing_info_label": {"EN": "Processing image", "UA": "Обробка зображення"},
 
     # sendqt
     "send_q_button": {"EN": "Send!", "UA": "Надіслати!"},
@@ -135,6 +138,7 @@ MAIN_WINDOW = {
     "pay_button": {"EN": "Pay", "UA": "Оплатити"},
     "back_button": {"EN": "Back", "UA": "Назад"},
     "scan_code_tip": {"EN": "Scan QR code to pay", "UA": "Сканувати QR код для оплати"},
+    "direct_link": {"EN": "Open in Browser", "UA": "Відкрити в браузері"},
 
 }
 

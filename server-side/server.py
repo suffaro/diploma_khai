@@ -8,14 +8,16 @@ import pathlib
 from PIL import Image
 import sys
 import json
+from textwrap import dedent
 
 sys.path.insert(0, '..\\clip')
 
 
+DB_CONFIG_FILE = os.path.join(pathlib.Path(__file__).parent, 'config', 'db_config.json')
+SERV_CONFIG_FILE = os.path.join(pathlib.Path(__file__).parent, 'config', 'serv_config.json')
+API_TOKENS = os.path.join(pathlib.Path(__file__).parent, 'config', 'env.json')
 
-DB_CONFIG_FILE = str(pathlib.Path(__file__).parent) + '\config\db_config.json'
-SERV_CONFIG_FILE = str(pathlib.Path(__file__).parent) + '\config\serv_config.json'
-API_TOKENS = str(pathlib.Path(__file__).parent) + '\config\env.json'
+print(API_TOKENS)
 
 with open(API_TOKENS, 'r') as file:
     config = json.load(file)
@@ -24,7 +26,7 @@ with open(API_TOKENS, 'r') as file:
     EMAIL_PROVIDER_TOKEN = config.get("EMAIL_PROVIDER_TOKEN")
 
 
-APP_V = "1.0.2"
+APP_V = "1.0.1"
 """
     answer format
     {
@@ -304,13 +306,14 @@ class Server():
             To: {receiver}
             From: {sender}
 
-            This is a test e-mail message."""
+            This is a test e-mail message. Code - {result}"""
 
             with smtplib.SMTP("live.smtp.mailtrap.io", 587) as server:
                 server.starttls()
                 server.login("api", EMAIL_PROVIDER_TOKEN)
-                server.sendmail(sender, receiver, message)
+                server.sendmail(sender, receiver, dedent(message))
             return "send".encode('utf-8')
+
         except Exception as e:
             self.logger.error(f"Error sending email: {e}")
             return f"Error sending email: Contact administrator please.".encode('utf-8')
@@ -379,7 +382,11 @@ class Server():
             client_socket.send(f"Error receiving image: {e}".encode("utf-8"))
 
 
-
+def test():
+    serv = Server()
+    username = "denpisotskiy@gmail.com"
+    serv.send_confirmation_code(username)
+    pass
 
 
 if __name__ == '__main__':

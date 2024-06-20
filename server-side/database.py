@@ -1,3 +1,5 @@
+import pathlib
+import mysql
 import mysql.connector
 from mysql.connector import Error
 import json
@@ -514,6 +516,18 @@ class Database:
         except Error as e:
             self.logger.error(f"Something went wrong during delete_request function. Error - {e}")
 
+    def delete_premium_status(self, username: str) -> bool:
+        try:
+            query = "delete from subscribers where username = %s"
+            result = self.execute_query(query, (username, ))
+            if result:
+                self.logger.info('delete_premium_status executed succesfully!')
+                return True
+            else:
+                return False
+        except Error as e:
+            self.logger.error(f"Something went wrong during delete_premium_status function. Error - {e}")
+
     def connect(self):
         """
         Connect to the MySQL database.
@@ -526,7 +540,8 @@ class Database:
                 host=self.host,
                 user=self.user,
                 password=self.password,
-                database=self.database
+                database=self.database,
+                port=3306
             )
             if self.connection.is_connected():
                 self.logger.info("Connected to MySQL database")
@@ -564,7 +579,7 @@ class Database:
             cursor.execute(query, params)
             results = cursor.fetchall()
             self.connection.commit()
-            if query[:6] == "SELECT":
+            if query[:6].lower() == "select":
                 return results if results else False
             return results if results else True
 
@@ -581,7 +596,7 @@ class Database:
 
 # Example usage:
 if __name__ == "__main__":
-    config_file = 'server-side/config/db_config.json'
+    config_file = os.path.join(pathlib.Path(__file__).parent, 'config', 'db_config.json')
     db = Database(config_file)
 
     db.connect()
@@ -597,8 +612,9 @@ if __name__ == "__main__":
     #db.get_models()
 
    # print(db.check_login_credentials(username, password))
-    sex = "fa1b7992eb6cf603f9234cbee589a9171711ccc9c3dfcd4acf3a5b70ba4b4bea"
-    print(db.check_login_credentials("seo23ij4", "sdfklj"))
+    # print(db.check_login_credentials("seo23ij4", "sdfklj"))
+    res = db.verify_confirmation_code("denpisotskiy@gmail.com", 396503)
+    print(res)
     # print(db.check_login_credentials(username, pass_hash))
 
     #query = "select end_date from Subscribers"

@@ -213,7 +213,7 @@ class AccountTab(ttk.Frame):
             Messagebox.ok("You have successfully logged out!", "Logout")
             os.remove(os.path.dirname(os.path.realpath(__file__)) + "\\configs\\token")
             os.remove(os.path.dirname(os.path.realpath(__file__)) + "\\configs\\user_settings")
-            self.master.master.destroy()
+            self.master.master.master.destroy()
         else:
             Messagebox.show_error("Something went wrong!", "Logout")     
 
@@ -568,7 +568,7 @@ class MainTab(ttk.Frame):
             self.minsize(600,400)
 
             if not config_file:
-                self.loader()
+                threading.Thread(target=self.loader, daemon=True).start()
             else:
                 self.window_pack(config_file, mode, compute, image_file, result_prompt, computation_time)
             
@@ -663,8 +663,18 @@ class MainTab(ttk.Frame):
                                             anchor = 'nw')
     
         def loader(self) -> None:
-            loading = AnimatedGif(self)
+            loading = AnimatedGif(master = self, adjusted_width = self.winfo_width() - 50, adjusted_height= self.winfo_height() - 50)
             loading.pack(expand=True, fill='both')
+            text_label = MAIN_WINDOW["image_processing_info_label"][app_configuration.locale]
+            image_processing_label = ttk.Label(self, text=text_label, justify='left', font=("Helvetica", 18), anchor='center')
+            image_processing_label.pack(expand=True, fill='both')
+            while True:
+                for i in range(4):
+                    new_text = text_label + ("." * i)
+                    image_processing_label.configure(text=new_text)
+                    time.sleep(0.5)
+
+
 
         def fill_image(self, event: object) -> None:
             if not self.image:
@@ -727,7 +737,8 @@ class SettingsTab(ttk.Frame):
         self.language_list = ["Українська", "English"]
         self.language_setting_combobox = ttk.Combobox(self.language_setting_frame,
                                                       values=["Українська", "English"],
-                                                      textvariable=self.language_setting_variable)
+                                                      textvariable=self.language_setting_variable,
+                                                      state='readonly')
         self.language_setting_combobox.set(self.language_list[0] if app_configuration.locale == 'UA' else self.language_list[1])
         self.language_setting_label.pack(side='left', fill='both')
         self.language_setting_combobox.pack(side='left', fill='x', padx=5, pady=5)
@@ -837,19 +848,25 @@ class SettingsTab(ttk.Frame):
         with open(file_path, "w") as file:
             for key, element in settings_dictionary.items():
                 file.write(f"{key}:{element}\n")
+        
+        messagebox_answer = Messagebox.yesno(f"{MAIN_WINDOW['message_restart_app_settings'][app_configuration.locale]}", MAIN_WINDOW['message_title_restart_app_settings'][app_configuration.locale])
+        if messagebox_answer:
+            self.master.master.master.restart_app()
+        
 
 class DocumentationTab(ttk.Frame):
     def __init__(self, master):
         super().__init__(master)
         self.docs_uploaded = False
-        self.frame = tkinterweb.HtmlFrame(self, messages_enabled=False)
+        #self.frame = tkinterweb.HtmlFrame(self, messages_enabled=False)
         self.bind("<Configure>", self.on_frame_pack)
 
 
 
     def on_frame_pack(self, event):
-        if self.master.pack_info() is not None and not self.docs_uploaded:
+        if self.pack_info() is not None and not self.docs_uploaded:
             try:
+                self.frame = tkinterweb.HtmlFrame(self, messages_enabled=False)
                 if app_configuration.locale == 'EN':
                     self.frame.load_file(os.path.join(os.path.dirname(__file__), 'docs.html'))
                 else:
@@ -860,6 +877,7 @@ class DocumentationTab(ttk.Frame):
                 logger.error("Not found documentation file")
 
     def test(self):
+
         self.frame = tkinterweb.HtmlFrame(self, messages_enabled=False)
         try:
             if app_configuration.locale == 'EN':
@@ -1122,6 +1140,13 @@ class PaymentWindow(ttk.Toplevel):
             frame.pack_forget()
 
         # Form QR code and output it in the window
+
+        html_code = """<form method="post" action="https://www.liqpay.ua/api/3/checkout/" accept-charset="utf-8">
+    <input type='hidden' name='data' value='eyJhY3Rpb24iOiAicGF5IiwgImFtb3VudCI6ICIxIiwgImN1cnJlbmN5IjogIlVTRCIsICJkZXNjcmlwdGlvbiI6ICJkZXNjcmlwdGlvbiB0ZXh0IiwgIm9yZGVyX2lkIjogIm9yZGVyX2lkXzEiLCAidmVyc2lvbiI6ICIzIiwgInB1YmxpY19rZXkiOiAiVnpReDhIdDYkSlkjOUBXeTJMcyZrY1RHN25QWDVScSpCVTBGajMhZE0xYU9aTklENFFydiVFYmhmK0NwIiwgImxhbmd1YWdlIjogInJ1IiwgInNhbmRib3giOiAwfQ=='>
+    <input type='hidden' name='signature' value='mR6C9v45XLgNrVNg4UeqvEA820E='>
+    <input type="image" src="//static.liqpay.ua/buttons/p1ru.radius.png" name="btn_text">
+    </form>"""
+        
         url = "http://www.liqpay.ua/checkout?action=pay?currency=USD?version=3?amount=" + price + "?description=" + description
         self.create_qr_code(url, description, price)
 
@@ -1158,12 +1183,11 @@ class PaymentWindow(ttk.Toplevel):
         self.qr_label.image = qr_photo  # keep a reference to prevent garbage collection
         self.qr_label.pack()
 
-        # Add direct link label
-        self.direct_link_label = ttk.Label(self, text=f"Direct Link: {url}")
-        self.direct_link_label.pack(pady=5)
         import webbrowser
-        self.direct_link_label.bind("<Button-1>", lambda e: webbrowser.open_new(url))
-        
+        # Add direct link label
+        self.direct_link_button = ttk.Button(self, text=MAIN_WINDOW['direct_link'][app_configuration.locale], command = lambda: webbrowser.open_new(url))
+        self.direct_link_button.pack(pady=5)
+               
 
         self.payment_info_label = ttk.Label(self, text=f"{description}\n${price}")
         self.payment_info_label.pack(pady=10)
@@ -1195,11 +1219,11 @@ class PaymentWindow(ttk.Toplevel):
 
 
 class AnimatedGif(ttk.Frame):
-    def __init__(self, master):
-        super().__init__(master, width=400, height=300)
+    def __init__(self, master, adjusted_width, adjusted_height):
+        super().__init__(master, width=adjusted_width, height=adjusted_height)
 
         # open the GIF and create a cycle iterator
-        file_path = Path(__file__).parent.parent / "giphy_2.gif"
+        file_path = os.path.join(os.path.dirname(__file__), "loading.gif")
         with Image.open(file_path) as im:
             # create a sequence
             sequence = ImageSequence.Iterator(im)
@@ -1209,8 +1233,8 @@ class AnimatedGif(ttk.Frame):
             # length of each frame
             self.framerate = im.info["duration"]
 
-        self.img_container = ttk.Label(self, image=next(self.image_cycle))
-        self.img_container.pack(fill="both", expand="yes")
+        self.img_container = ttk.Label(self, image=next(self.image_cycle), anchor='center')
+        self.img_container.pack(fill="both", expand=True)
         self.after(self.framerate, self.next_frame)
 
     def next_frame(self):

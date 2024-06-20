@@ -118,9 +118,11 @@ class LoginPage(ttk.Frame):
                         padx = 10,
                         pady = 10)
 
+        # for event
+        self.msgbox_checker_wrong = [None]
         self.login_button = ttk.Button(self,
                                   text = LOGIN_PAGE["login_button"][app_configuration.locale],
-                                  command = lambda: threading.Thread(target = self.login_to_app).start(),)
+                                  command = lambda: threading.Thread(target = self.login_to_app, args=(self.msgbox_checker_wrong,)).start(),)
         self.login_button.grid(column = 1,
                         row = 3,
                         sticky = 'nsew',
@@ -148,13 +150,15 @@ class LoginPage(ttk.Frame):
 
         self.registration_button = ttk.Button(self,
                                   text = LOGIN_PAGE["registration_button"][app_configuration.locale],
-                                  command = lambda: RegistrationWindow(self),
+                                  command = lambda: RegistrationWindow(self, [self]),
                                   )
         self.registration_button.place(relx = 0.5,
                                        rely = 0.87,
                                        anchor = 'center',
                                        relheight = 0.06,
                                        relwidth = 0.2)
+        
+        self.checker_event = self.after(1000, self.login_verification_event)
         
         
     def change_current_theme(self):
@@ -165,15 +169,27 @@ class LoginPage(ttk.Frame):
             self.current_theme = 'darkly'
             self.master.style.theme_use(self.current_theme)
         
-    def login_to_app(self):
+    def login_verification_event(self, cancel=False, *args):
+        if self.msgbox_checker_wrong[0] == False:
+            Messagebox.show_error(LOGIN_PAGE["message_wrong_email_or_pass"][app_configuration.locale], "Error", parent=self)
+            self.msgbox_checker_wrong[0] = None
+        elif self.msgbox_checker_wrong[0]:
+            self.after_cancel(self.checker_event)
+
+        self.after(1000, self.login_verification_event)
+
+            
+
+
+    def login_to_app(self, checker):
         client = Client()
         verification = client.process_request(f"UCV|{self.email_variable.get()}|{self.password_variable.get()}")
         if verification == "False":
-            Messagebox.show_error(LOGIN_PAGE["message_wrong_email_or_pass"][app_configuration.locale], "Error", parent=self)
+            checker[0] = False
         else:
+            checker[0] = True
             with open(os.path.dirname(os.path.realpath(__file__)) + "\\configs\\token", 'w') as f:
                 f.write(f"{self.email_variable.get()}|{verification}")
-            self.pack_forget()
             self.master.form_main_page()
 
 
@@ -297,8 +313,8 @@ class ValidationEntry(ttk.Entry):
 
 
 class RegistrationWindow(ttk.Toplevel):
-    def __init__(self, master):
-        super().__init__(master)
+    def __init__(self, master, reference_variable):
+        super().__init__(master=master)
 
         self.title(LOGIN_PAGE["registration_title"][app_configuration.locale])
         self.geometry = ('900x700')
@@ -504,9 +520,8 @@ class RegistrationWindow(ttk.Toplevel):
                     token = client.process_request(f"UCV|{self.email_variable.get()}|{self.password_variable.get()}")
                     with open(os.path.dirname(os.path.realpath(__file__)) + "\\configs\\token", 'w') as f:
                         f.write(f"{self.email_variable.get()}|{token}")
-                    self.destroy()
-                    self.master.pack_forget()
                     self.master.master.form_main_page()
+                    self.destroy()
                 else:
                     self.destroy()
 
@@ -526,7 +541,7 @@ class RegistrationWindow(ttk.Toplevel):
 
 class ForgotPasswordWindow(ttk.Toplevel):
     def __init__(self, master):
-        super().__init__(master)
+        super().__init__(master=master)
         self.title(LOGIN_PAGE["recover_password_title"][app_configuration.locale])
         self.geometry('500x300')
         self.minsize(500, 300)

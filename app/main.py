@@ -41,7 +41,7 @@ class Application(ttk.Window):
             self.settings = ApplicationConfiguration()
             self.current_theme = self.settings.theme
             self.style.theme_use(self.current_theme)
-            print(token)
+            self.login_page = None
             if token is not None:
                 client = Client()
                 result = client.process_request(f"TKN|{token.split(sep='|')[1]}")
@@ -49,7 +49,7 @@ class Application(ttk.Window):
                     self.form_main_page()
                 else:
                     Messagebox.show_error("Something wrong with your token! Please login again.", "Error!")
-                    os.remove("token")
+                    os.remove(os.path.dirname(os.path.realpath(__file__)) + "\\configs\\token")
                     self.destroy()
             else:
                 self.login_page = LoginPage(self)
@@ -62,8 +62,15 @@ class Application(ttk.Window):
             Messagebox.show_error("Something wrong. Please, try again", "Error!")
 
     def form_main_page(self):
+        if self.login_page:
+            self.login_page.pack_forget()
+            self.login_page = None
         self.main_page = MenuApp(self) #MainPage(self)
         self.main_page.pack(expand=True, fill='both')
+
+    def restart_app(self):
+        self.destroy()
+        os.execl(sys.executable, sys.executable, *sys.argv)
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
