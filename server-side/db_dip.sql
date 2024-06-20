@@ -87,7 +87,7 @@ VALUES ('12 months', 85.00, 'Premium subscription for 12 months with discount', 
 CREATE TABLE models (
 	model_name VARCHAR(50),
     description TEXT,
-    premium Bool
+    premium Boolean
 );
 
 -- Insert data with descriptions into the models table

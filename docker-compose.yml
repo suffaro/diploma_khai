@@ -6,23 +6,39 @@
 # docker logs --tail 50 $service_name
 # docker-compose images
 # docker-compose logs --tail 20 $service_name
+
 services:
-    db:
-        container_name: mydb
-        image: mysql:5.7
-        ports:
-            - "3306:3319"
-        environment:
-            - MYSQL_ROOT_PASSWORD=password123
-            - MYSQL_DATABASE=diploma_khai
-            - MYSQL_USER=admin
-            - MYSQL_PASSWORD=password123
-        volumes:
-            - ./server-side:/docker-entrypoint-initdb.d
-    app:
-        container_name: myapp
-        links:
-            - "db"
-        build: ./
-        ports:
-            - "65432:65432"
+  db:
+    container_name: db
+    image: mysql:5.7
+    ports:
+      - "3319:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=strongpass123
+      - MYSQL_DATABASE=diploma_khai
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=Suma1l24_
+    volumes:
+      - ./server-side:/docker-entrypoint-initdb.d
+    networks:
+      - app-network
+
+  app:
+    container_name: myapp
+    build: ./
+    ports:
+      - "65432:65420"
+    links:
+      - db
+    environment:
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=Suma1l24_
+      - MYSQL_DB=diploma_khai
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

@@ -30,7 +30,7 @@ LOGIN_PAGE = {
     "code_approved_msg_title": {"EN": "Code approved", "UA": "Код підтверджено"},
     "code_not_approved_msg": {"EN": "Wrong code. Please check it again, or contact QA using address imgproplus@gmail.com.", "UA": "Неправильний код. Будь ласка, перевірте його ще раз, або зверніться до QA за адресою imgproplus@gmail.com."},
     "code_not_approved_msg_title": {"EN": "Wrong code", "UA": "Неправильний код"},
-    "user_registered_msg": {"EN": "You're registered. Login manually or click ok to restart the app please.", "UA": "Ви зареєстровані. Будь ласка, зв'яжіться з адміністратором або натисніть ok, щоб перезапустити додаток."},
+    "user_registered_msg": {"EN": "You're registered. Login manually or click ok to restart the app please.", "UA": "Ви зареєстровані. Будь ласка, залогіньтесь вручну або натисніть ok, щоб перезапустити додаток."},
     "user_registered_msg_title": {"EN": "Registered", "UA": "Зареєстровано"},
 
 

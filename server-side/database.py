@@ -27,9 +27,9 @@ class Database:
         self.password = None
         self.database = None
         self.connection = None
-        if not os.path.exists(os.path.dirname(os.path.realpath(__file__)) + "\\logs"):
-            os.mkdir(os.path.dirname(os.path.realpath(__file__)) + "\\logs")
-        self.logger = setup_logger(logger_name="Database Logger", logger_file=".\logs\server_side_logs.log")
+        if not os.path.exists(os.path.join(os.path.dirname(__file__), "logs")):
+            os.mkdir(os.path.join(os.path.dirname(__file__), "logs"))
+        self.logger = setup_logger(logger_name="Database Logger", logger_file=os.path.join(os.path.dirname(__file__), "logs", "db_logs.log"))
 
         self.load_config(config_file)
 
@@ -264,7 +264,7 @@ class Database:
     # for this i need to check monobank api
     def add_payment(self, username: str, payment_date: str, promotion_id: str) ->bool:
         try:
-            query = "INSERT INTO add_payment (username, end_date) VALUES (%s, %s)"
+            query = "INSERT INTO add_payment (username, end_date, promotion_id) VALUES (%s, %s)"
             results = self.execute_query(query, (username, payment_date, promotion_id))
             self.logger.info('add_payment executed succesfully!')
             if results:

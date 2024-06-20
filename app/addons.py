@@ -73,7 +73,7 @@ class Config:
     cache_path: str = 'cache'   # path to store cached text embeddings
     download_cache: bool = True # when true, cached embeds are downloaded from huggingface
     chunk_size: int = 2048      # batch size for CLIP, use smaller for lower VRAM
-    data_path: str = os.path.join(os.path.dirname(__file__), 'data')
+    data_path: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'clip', 'data'))
     device: str = "cuda"
     flavor_intermediate_count: int = 2048
     quiet: bool = False # when quiet progress bars are not shown

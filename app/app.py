@@ -816,7 +816,7 @@ class SettingsTab(ttk.Frame):
     def check_updates(self, silent=True) -> None:
         client = Client() 
         result = client.process_request(f"UPD|{APP_INIT['VERSION']}")
-        if result == "True" and not silent:
+        if result == "True" and silent:
             Messagebox.ok(MAIN_WINDOW["update_message_newest"][app_configuration.locale], "ImgProPlus Update")
         else:
             mb = Messagebox.yesno(f"{MAIN_WINDOW['update_message_outdated'][app_configuration.locale]}{result}", "ImgProPlus Update")
@@ -1165,7 +1165,7 @@ class PaymentWindow(ttk.Toplevel):
         self.instruction_label.pack_forget()
         self.payment_info_label.pack_forget()
         self.back_button.pack_forget()
-        self.direct_link_label.pack_forget()
+        self.direct_link_button.pack_forget()
 
         # Show promotion frames again
         for frame in self.promotion_frames:
@@ -1245,7 +1245,7 @@ class AnimatedGif(ttk.Frame):
 
 def installed_models(*args) -> list [str]:
     # Construct the path to the desired directory
-    cache_clip_path = os.path.dirname(os.path.realpath(__file__)) + "\\models"
+    cache_clip_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'clip', 'models'))
     models = []
     if os.path.exists(cache_clip_path):
         elements = os.listdir(cache_clip_path)

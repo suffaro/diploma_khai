@@ -17,7 +17,6 @@ DB_CONFIG_FILE = os.path.join(pathlib.Path(__file__).parent, 'config', 'db_confi
 SERV_CONFIG_FILE = os.path.join(pathlib.Path(__file__).parent, 'config', 'serv_config.json')
 API_TOKENS = os.path.join(pathlib.Path(__file__).parent, 'config', 'env.json')
 
-print(API_TOKENS)
 
 with open(API_TOKENS, 'r') as file:
     config = json.load(file)
@@ -62,24 +61,28 @@ APP_V = "1.0.1"
 """
 class Server():
     def __init__(self):
+        self.logger = setup_logger(logger_name="Server Logger", logger_file=os.path.join(os.path.dirname(__file__), "logs", "server_side_logs.log"))
+        try:
+            with open(SERV_CONFIG_FILE, 'r') as file:
+                config = json.load(file)
 
-        with open(SERV_CONFIG_FILE, 'r') as file:
-            config = json.load(file)
+                self.addr_ip = config.get("IP")
+                self.addr_port = config.get("PORT")
+                self.buffer = config.get("MAX_CHUNK_SIZE")
+                self.max_conn = config.get("MAX_CONNECTIONS")
+                self.online = config.get("ONLINE")
+            
+            if not os.path.exists(os.path.join(os.path.dirname(__file__), "logs")):
+                os.mkdir(os.path.join(os.path.dirname(__file__), "logs"))
+            
 
-            self.addr_ip = config.get("IP")
-            self.addr_port = config.get("PORT")
-            self.buffer = config.get("MAX_CHUNK_SIZE")
-            self.max_conn = config.get("MAX_CONNECTIONS")
-            self.online = config.get("ONLINE")
+            self.images_dir = "uploaded_images"
 
-        if not os.path.exists(os.path.dirname(os.path.realpath(__file__)) + "\\logs"):
-            os.mkdir(os.path.dirname(os.path.realpath(__file__)) + "\\logs")
-        self.logger = setup_logger(logger_name="Server Logger", logger_file=".\logs\server_side_logs.log")
+            self.server_database = Database(DB_CONFIG_FILE)
+            self.server_database.connect()
+        except Exception as e:
+            self.logger.error(f"Error during server initialization: {e}")
 
-        self.images_dir = "uploaded_images"
-
-        self.server_database = Database(DB_CONFIG_FILE)
-        self.server_database.connect()
 
 
 
@@ -88,6 +91,7 @@ class Server():
         try:   # receive and print client messages
             request = client_socket.recv(self.buffer).decode("utf-8")
             request_list = request.split(sep = "|")
+            self.logger.info(f"{addr[0]}:{addr[1]} received {request_list[0]} for processing!")
             if request_list[0] == "close":
                 client_socket.send("closed".encode("utf-8"))
             elif request_list[0] == 'CLS':
