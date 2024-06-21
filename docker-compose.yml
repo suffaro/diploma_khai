@@ -17,7 +17,7 @@ services:
       - MYSQL_ROOT_PASSWORD=strongpass123
       - MYSQL_DATABASE=diploma_khai
       - MYSQL_USER=admin
-      - MYSQL_PASSWORD=Suma1l24_
+      - MYSQL_PASSWORD=
     volumes:
       - ./server-side:/docker-entrypoint-initdb.d
     networks:
@@ -32,7 +32,7 @@ services:
       - db
     environment:
       - MYSQL_USER=admin
-      - MYSQL_PASSWORD=Suma1l24_
+      - MYSQL_PASSWORD=
       - MYSQL_DB=diploma_khai
     depends_on:
       - db
