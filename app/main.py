@@ -26,10 +26,6 @@ else:
     token = None
 
 
-# login 
-# rapperorwhat@gmail.com 
-# Suma1l24_
-
 class Application(ttk.Window):
     def __init__(self):
         super().__init__()
