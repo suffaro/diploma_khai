@@ -1,13 +1,63 @@
-# Diploma Project
-An application with a client-server architecture for generating image prompts.
-Database: MySQL (used to store client data, including credits and subscriptions)
-Backend: Hugging Face API for model downloading (prompt recognition), combined with a custom library for delivering prompts. The server is written in Python and uses custom request headers over HTTPS.
-Frontend: ttkbootstrap (Python)
-Payment System: LiqPay API (QR code generation and payment link creation)
+# 🎓 Diploma Project — Image Prompt Generator
 
-To use the application, either run it via the provided Dockerfile or clone the repository and create the database from scratch.
+An application with a **client-server architecture** designed to generate prompts for image generation models.
 
-The client application is designed to run as an .exe file. If you want to run it locally without a server, you can modify the code in main.py to bypass the authentication process.
+---
 
+## 🧩 Architecture Overview
 
-If you're looking for more information about this application, please open .pdf file in the root directory of the repo.
+### 📦 Database
+- **MySQL**  
+  Used to store:
+  - Client accounts
+  - Credits
+  - Subscription data
+
+### 🧠 Backend
+- **Hugging Face API** – For downloading models used in prompt recognition  
+- **Custom Prompt Library** – Handles prompt generation logic  
+- **Server:** Written in Python  
+  - Uses custom request headers over **HTTPS**
+
+### 🎨 Frontend
+- **ttkbootstrap** (Python UI framework)
+
+### 💳 Payment System
+- **LiqPay API**  
+  - Generates QR codes for payments  
+  - Provides secure payment links
+
+---
+
+## 🚀 Getting Started
+
+You can run the application in one of two ways:
+1. Use the provided **Dockerfile**.
+2. Clone the repository and create the **MySQL database** manually from scratch.
+
+---
+
+## 🖥️ Client Application
+
+The client is packaged as an `.exe` file for ease of use.  
+If you want to run it locally **without connecting to the server**, you can:
+- Open `main.py`
+- Modify the code to **bypass the authentication process**
+
+---
+
+## 📄 Full Project Description (PDF)
+
+For a complete explanation of the system's components, logic, and usage scenarios, please see the documents below:
+
+- 🇺🇦 [**Ukrainian Version (Original, Preferred)**](./project.pdf)  
+- 🇬🇧 [**English Version (Google Translated)**](./project-EN.pdf)
+
+> Both files are located in the root directory of the repository.
+
+---
+
+## ⚠️ Notes
+
+- This project was developed as part of a diploma thesis.
+- It is currently not under active development.
