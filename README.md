@@ -29,6 +29,23 @@ An application with a **client-server architecture** designed to generate prompt
 
 ---
 
+## 🏗️ Architecture
+┌─────────────────┐    HTTPS/Custom Headers     ┌─────────────────┐
+│                 │ ◄─────────────────────────► │                 │
+│  Client (GUI)   │                             │  Python Server  │
+│  - ttkbootstrap │                             │  - CLIP Models  │
+│  - CLIP Client  │                             │  - Prompt Gen   │
+│  - Payment UI   │                             │  - Auth System  │
+└─────────────────┘                             └─────────────────┘
+                                                          │
+                                                          ▼
+                                                ┌─────────────────┐
+                                                │  MySQL Database │
+                                                │  - User Data    │
+                                                │  - Credits      │
+                                                │  - Subscriptions│
+                                                └─────────────────┘
+
 ## 🚀 Getting Started
 
 You can run the application in one of two ways:
