@@ -46,17 +46,6 @@ If you want to run it locally **without connecting to the server**, you can:
 
 ---
 
-## 📄 Full Project Description (PDF)
-
-For a complete explanation of the system's components, logic, and usage scenarios, please see the documents below:
-
-- 🇺🇦 [**Ukrainian Version (Original, Preferred)**](./project.pdf)  
-- 🇬🇧 [**English Version (Google Translated)**](./project-EN.pdf)
-
-> Both files are located in the root directory of the repository.
-
----
-
 ## ⚠️ Notes
 
 - This project was developed as part of a diploma thesis.
