@@ -2,4 +2,4 @@ mysql_connector==2.2.9
 Pillow==10.3.0
 python_bcrypt==0.3.2
 Requests==2.32.3
-tqdm==4.65.0
+tqdm==4.66.3
